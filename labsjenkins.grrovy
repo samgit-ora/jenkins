@@ -1,0 +1,776 @@
+job("dsljob") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		dsl {
+			text("""job('generatedJob') {
+  steps {
+    parameters {
+     stringParam('Object','No description','This parameter describes a type of string object')
+    }
+  shell ('echo \$JOB_NAME \$BUILD_NUMBER')
+  shell ('echo \$Object')
+  }
+}
+job('SimpleJobwithParameter') {
+  steps {
+    parameters {
+     stringParam('Object','No description','This parameter describes a type of string object')
+    }
+  shell ('echo \$JOB_NAME \$BUILD_NUMBER')
+  shell ('echo \$Object')
+  }
+}
+job('SimpleTrigger') {
+  steps {
+    parameters {
+     stringParam('Object','Car','This parameter describes a type of string object')
+    }
+  shell ('echo \$JOB_NAME \$BUILD_NUMBER')
+  shell ('echo \$Object')
+  }
+  publishers {
+   downstream('simpleJobWithParameters','SUCCESS')
+  }
+}""")
+			ignoreExisting(false)
+			removeAction("IGNORE")
+			removeViewAction("IGNORE")
+			lookupStrategy("JENKINS_ROOT")
+		}
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("extractLastBuild") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("ls -lR")
+	}
+	wrappers {
+		preBuildCleanup {
+			deleteDirectories(false)
+			cleanupParameter()
+		}
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("FailBy2") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("SRC_BLDNUM", "SRC_BUILD_NUMBER", "")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("""rem=\$(( \${BUILD_NUMBER} % 2 ))
+ 
+if [ \$rem -eq 0 ]
+then
+  echo "\$BUILD_NUMBER is even number"
+else
+  echo "\$BUILD_NUMBER is odd number"
+  exit 1
+fi""")
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("Failed") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"My build \$BUILD_NUMBER is odd, hence failed\"")
+	}
+}
+
+job("generatedJob") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("Object", "No description", "This parameter describes a type of string object")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("gitDownStream") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("BUILD_NUM", "DownDdfault", "")
+		stringParam("JOB_NAM", "DownJOBNam", "")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Job \${JOB_NAM} sam - was successfully built \$BUILD_NUM\"")
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("gitHub") {
+	description()
+	keepDependencies(false)
+	scm {
+		git {
+			remote {
+				github("samgit-ora/jenkins", "https")
+			}
+			branch("*/master")
+		}
+	}
+	disabled(false)
+	triggers {
+		githubPush()
+		scm("*/2 * * * *") {
+			ignorePostCommitHooks(false)
+		}
+	}
+	concurrentBuild(false)
+	steps {
+		shell("cat README.md")
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("testUpstream") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello, I'm UPSTREAM\"")
+	}
+	publishers {
+		downstream("testDownstream", "SUCCESS")
+	}
+}
+
+job("testDownstream") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello, DOWNSTREAM\"")
+	}
+}
+
+job("Succeeded") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("SRC_BLDNUM", "Default", "")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Build \$SRC_BLDNUM is even, hence successful\"")
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("SlaveDown3") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello I'm SlaveDown3\"")
+	}
+}
+
+job("SlaveDown2") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello I'm slavedown2\"")
+	}
+}
+
+job("Slavedown1") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("downstream", "downstreamDefault", "")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"I'm slave down1 \$downstream\"")
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("SimpleTrigger") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("Object", "Car", "This parameter describes a type of string object")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+	publishers {
+		downstream("simpleJobWithParameters", "SUCCESS")
+	}
+}
+
+job("SimpleJobwithParameter") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("Object", "No description", "This parameter describes a type of string object")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("scriptToCreateJobs") {
+	description()
+	keepDependencies(false)
+	scm {
+		git {
+			remote {
+				github("samgit-ora/jenkins", "https")
+			}
+			branch("*/master")
+		}
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		dsl {
+			ignoreExisting(false)
+			removeAction("IGNORE")
+			removeViewAction("IGNORE")
+			lookupStrategy("JENKINS_ROOT")
+		}
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("SamTrigger") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("Object", "Car", "This parameter describes a type of string object")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+	publishers {
+		downstream("simpleJobWithParameters", "SUCCESS")
+	}
+}
+
+job("SamFirstJob") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"This is my First Jenkins Job\"")
+	}
+}
+
+pipelineJob("pipelineStage") {
+	description()
+	keepDependencies(false)
+	definition {
+		cpsScm {
+"""node {
+stage ('Create File') {
+sh label: '', script: 'touch pipelinefile'
+}
+stage ('write') {
+sh label: '', script: 'echo "Hello Pipeline" >pipelinefile'
+}
+stage ('Display') {
+sh label: '', script: 'cat pipelinefile'
+}
+}"""		}
+	}
+	disabled(false)
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+pipelineJob("pipelineJob") {
+	description()
+	keepDependencies(false)
+	definition {
+		cpsScm {
+"""node {
+ echo 'Hello World'
+ git 'https://github.com/samgit-ora/jenkins.git'
+ sh 'ls'
+}"""		}
+	}
+	disabled(false)
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+pipelineJob("pipeGit") {
+	description()
+	keepDependencies(false)
+	definition {
+		cpsScm {
+			scm {
+				git {
+					remote {
+						github("samgit-ora/jenkins", "https")
+					}
+					branch("*/master")
+				}
+			}
+			scriptPath("pipelinefile")
+		}
+	}
+	disabled(false)
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("paramJob") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("myParam", "valueOfParam", "")
+		choiceParam("ChoiceParameter", ["one", "two", "three"], "")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("""echo "myParam has the value of \$myParam"
+echo "Choice Parameter has the value of \${ChoiceParameter}"""")
+	}
+}
+
+job("parameterizedJob") {
+	description()
+	keepDependencies(false)
+	parameters {
+		stringParam("downstream", "downstream", "")
+	}
+	disabled(false)
+	concurrentBuild(false)
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("myUp") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello myUP\"")
+	}
+}
+
+job("myDown") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello myDOWN\"")
+	}
+	publishers {
+		downstream("myUp", "SUCCESS")
+	}
+}
+
+pipelineJob("mavenPipeline") {
+	description()
+	keepDependencies(false)
+	definition {
+		cpsScm {
+"""pipeline {
+  
+ agent any
+   tools {
+      // Install the Maven version configured as "M3" and add it to the path.
+      maven "M3"
+   }
+
+   stages {
+      stage('Build') {
+         steps {
+            // Get some code from a GitHub repository
+            git 'https://github.com/samgit-ora/SamJen.git'
+
+            // Run Maven on a Unix agent.
+            sh "mvn -Dmaven.test.failure.ignore=true clean package"
+
+            // To run Maven on a Windows agent, use
+            // bat "mvn -Dmaven.test.failure.ignore=true clean package"
+         }
+
+         post {
+            // If Maven was able to run the tests, even if some of the test
+            // failed, record the test results and archive the jar file.
+            success {
+               junit '**/target/surefire-reports/TEST-*.xml'
+               archiveArtifacts 'target/*.jar'
+            }
+         }
+      }
+   }
+}"""		}
+	}
+	disabled(false)
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("mavenbuildfree") {
+	description()
+	keepDependencies(false)
+	scm {
+		git {
+			remote {
+				github("samgit-ora/SamJen", "https")
+			}
+			branch("*/master")
+		}
+	}
+	disabled(false)
+	triggers {
+		githubPush()
+	}
+	concurrentBuild(false)
+	steps {
+		shell("mvn package")
+	}
+	publishers {
+		archiveArtifacts {
+			pattern("target/**")
+			allowEmpty(false)
+			onlyIfSuccessful(false)
+			fingerprint(false)
+			defaultExcludes(true)
+		}
+		downstream("extractLastBuild", "SUCCESS")
+	}
+	wrappers {
+		preBuildCleanup {
+			deleteDirectories(false)
+			cleanupParameter()
+		}
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+null("Simple Maven example") {
+}
+
+null("Maven") {
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("MasterUP") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello I'm masterUP\"")
+	}
+	publishers {
+		downstream("Slavedown1, SlaveDown2, SlaveDown3", "SUCCESS")
+	}
+}
+
+job("job-9") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-8") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-7") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-6") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-5") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-4") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-3") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("gitseed") {
+	description()
+	keepDependencies(false)
+	scm {
+		git {
+			remote {
+				github("samgit-ora/jenkins", "https")
+			}
+			branch("*/master")
+		}
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		dsl {
+			ignoreExisting(false)
+			removeAction("IGNORE")
+			removeViewAction("IGNORE")
+			lookupStrategy("JENKINS_ROOT")
+		}
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("gitseedloop") {
+	description()
+	keepDependencies(false)
+	scm {
+		git {
+			remote {
+				github("samgit-ora/jenkins", "https")
+			}
+			branch("*/master")
+		}
+	}
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		dsl {
+			ignoreExisting(false)
+			removeAction("IGNORE")
+			removeViewAction("IGNORE")
+			lookupStrategy("JENKINS_ROOT")
+		}
+	}
+	configure {
+		it / 'properties' / 'com.sonyericsson.rebuild.RebuildSettings' {
+			'autoRebuild'('false')
+			'rebuildDisabled'('false')
+		}
+	}
+}
+
+job("GroovyParameter") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("""echo "Choice parameter MainOption : \$MainOption"
+echo "Choice parameter MainOption : \$DependentOption"""")
+	}
+}
+
+job("groovyParameters") {
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+}
+
+job("HelloProject") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \"Hello, my name is sam!\"")
+	}
+}
+
+job("job-1") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-10") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
+
+job("job-2") {
+	description()
+	keepDependencies(false)
+	disabled(false)
+	concurrentBuild(false)
+	steps {
+		shell("echo \$JOB_NAME \$BUILD_NUMBER")
+		shell("echo \$Object")
+	}
+}
