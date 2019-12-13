@@ -1,0 +1,12 @@
+job('SamTrigger') {
+  steps {
+    parameters {
+     stringParam('Object','Car,'This parameter describes a type of string object')
+    }
+  shell ('echo $JOB_NAME $BUILD_NUMBER')
+  shell ('echo $Object')
+  }
+  publishers {
+   downstream('simpleJobWithParameters','SUCCESS')
+  }
+}
