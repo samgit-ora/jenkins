@@ -1,0 +1,9 @@
+node {
+stage ('Clone') {
+ git 'https://github.com/samgit-ora/jenkins.git'
+}
+stage ('Display') {
+sh label: '', script: 'cat script'
+}
+
+}
